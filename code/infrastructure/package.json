@@ -1,0 +1,32 @@
+{
+  "name": "infrastructure",
+  "version": "1.0.1",
+  "type": "module",
+  "description": "Example skeleton",
+  "scripts": {
+    "python:install": "echo 'No python code to install'",
+    "python:clean": "echo 'No python code to clean up'",
+    "test:local": "echo 'No tests to execute'",
+    "cdk:deploy": "tsx code/init.ts",
+    "cdk:destroy": "cdk destroy '*' --force"
+  },
+  "author": "Jordan Bice",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.470.0",
+    "@aws-sdk/client-route-53": "^3.504.0",
+    "@aws-sdk/client-secrets-manager": "^3.669.0",
+    "@aws-sdk/lib-dynamodb": "^3.470.0",
+    "@aws-sdk/rds-signer": "^3.667.0",
+    "@types/node": "^20.14.2",
+    "aws-cdk-lib": "^2.145.0",
+    "aws-cli": "^0.0.2",
+    "constructs": "^10.3.0",
+    "dotenv": "^16.0.2",
+    "mysql2": "^3.11.3",
+    "sequelize": "^6.37.4",
+    "typescript": "^5.4.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.2"
+  }
+}

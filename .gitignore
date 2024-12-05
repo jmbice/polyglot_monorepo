@@ -1,0 +1,11 @@
+.DS_Store
+.env
+**/node_modules
+**/env
+**/build
+**/dist
+**/.eggs
+**/*.egg-info/
+**/cdk.out
+**/cdk-outputs.json
+**/cdk.context.json

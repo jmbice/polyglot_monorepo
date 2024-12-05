@@ -1,0 +1,65 @@
+name: Deploy-Test-Destroy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "This is used to tell github which variables/secrets to use"
+
+jobs:
+  deploy:
+    environment: ${{ inputs.environment }}
+    env:
+      CICD_DEPLOYMENT_ENVIRONMENT: ${{ vars.DEPLOYMENT_ENVIRONMENT == 'production' && 'production-cicd' || vars.DEPLOYMENT_ENVIRONMENT == 'develop' && 'develop-cicd' || '' }}
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        id: deploy_step
+        uses: ./.github/actions/deploy
+        with:
+          ALLOW_LIST_IPS: ${{ vars.ALLOW_LIST_IPS }}
+          DEPLOYMENT_ENVIRONMENT: ${{ env.CICD_DEPLOYMENT_ENVIRONMENT }}
+          LIBRARY_TOKEN_GITHUB: ${{ secrets.LIBRARY_TOKEN_GITHUB }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}
+
+  remote_test:
+    name: Test Incoming Deployment
+    needs:
+      - deploy
+    uses: ./.github/workflows/test_system_remotely.yml
+    secrets: inherit
+    with:
+      environment: ${{ inputs.environment }}
+
+  destroy:
+    name: Destroy
+    environment: ${{ inputs.environment }}
+    env:
+      CICD_DEPLOYMENT_ENVIRONMENT: ${{ vars.DEPLOYMENT_ENVIRONMENT == 'production' && 'production-cicd' || vars.DEPLOYMENT_ENVIRONMENT == 'develop' && 'develop-cicd' || '' }}
+    needs:
+      - deploy
+      - remote_test
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+      - name: Destroy
+        uses: ./.github/actions/destroy
+        with:
+          ALLOW_LIST_IPS: ${{ vars.ALLOW_LIST_IPS }}
+          DEPLOYMENT_ENVIRONMENT: ${{ env.CICD_DEPLOYMENT_ENVIRONMENT }}
+          LIBRARY_TOKEN_GITHUB: ${{ secrets.LIBRARY_TOKEN_GITHUB }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT: ${{ secrets.AWS_ACCOUNT }}

@@ -1,0 +1,33 @@
+name: On Pull Request
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # JOB to run change detection so we run relevant tests only
+  detect_changes:
+    name: Detect Changes
+    uses: ./.github/workflows/detect_changes.yml
+
+  # JOB to build and test each of modified service
+  unit_tests_services:
+    name: Tests Services
+    needs:
+      - detect_changes
+    uses: ./.github/workflows/test_services_locally.yml
+    with:
+      paths_to_test: ${{ needs.detect_changes.outputs.service_paths }}
+      environment: "develop"
+    secrets: inherit
+
+  # JOB to execute unit tests in infrastructure repo
+  unit_tests_infrastructure:
+    name: Tests Services
+    needs:
+      - detect_changes
+    uses: ./.github/workflows/test_services_locally.yml
+    with:
+      paths_to_test: ${{ needs.detect_changes.outputs.infrastructure_paths }}
+      environment: "develop"
+    secrets: inherit

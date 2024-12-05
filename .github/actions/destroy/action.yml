@@ -1,0 +1,103 @@
+name: "Destroy Action"
+description: "CDK Action to Destroy System"
+
+inputs:
+  ALLOW_LIST_IPS:
+    description: "Stringified array of allowed IP addresses."
+    required: true
+
+  DEPLOYMENT_ENVIRONMENT:
+    description: "The environment to deploy to (e.g., dev, staging, production)."
+    required: true
+
+  LIBRARY_TOKEN_GITHUB:
+    description: "Token for accessing the library."
+    required: true
+
+  AWS_ACCESS_KEY_ID:
+    description: "AWS Access Key ID for deployment."
+    required: true
+
+  AWS_SECRET_ACCESS_KEY:
+    description: "AWS Secret Access Key for deployment."
+    required: true
+
+  AWS_REGION:
+    description: "The AWS region to deploy to."
+    required: true
+
+  AWS_ACCOUNT:
+    description: "The AWS account to deploy to."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check Out Repository
+      uses: actions/checkout@v4
+
+    - name: Set Node Version
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+
+    - name: Install CDK
+      shell: bash
+      run: npm i -g aws-cdk
+
+    - name: Install Packages
+      shell: bash
+      run: npm i
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.AWS_REGION }}
+
+    - name: Create Environment File
+      shell: bash
+      run: |
+        touch .env
+        echo ALLOW_LIST_IPS=${{ inputs.ALLOW_LIST_IPS }} >> .env
+        echo DEPLOYMENT_ENVIRONMENT=${{ inputs.DEPLOYMENT_ENVIRONMENT }} >> .env
+        echo AWS_ACCESS_KEY_ID=${{ inputs.AWS_ACCESS_KEY_ID }} >> .env
+        echo AWS_SECRET_ACCESS_KEY=${{ inputs.AWS_SECRET_ACCESS_KEY }} >> .env
+        echo LIBRARY_TOKEN_GITHUB=${{ inputs.LIBRARY_TOKEN_GITHUB }} >> .env
+        echo AWS_REGION=${{ inputs.AWS_REGION }} >> .env
+        echo AWS_ACCOUNT=${{ inputs.AWS_ACCOUNT }} >> .env
+
+    - name: Download Infrastructure Output
+      uses: actions/download-artifact@v3
+      with:
+        name: infrastructure-output
+        path: code/infrastructure/
+
+    - name: Download Cron Job Output
+      uses: actions/download-artifact@v3
+      with:
+        name: cron-job-output
+        path: code/services/cron_jobs/
+
+    - name: Download Live API Output
+      uses: actions/download-artifact@v3
+      with:
+        name: live-api-output
+        path: code/services/live_api/
+
+    - name: Download Process Tasks Output
+      uses: actions/download-artifact@v3
+      with:
+        name: process-tasks-output
+        path: code/services/process_tasks/
+
+    - name: Download Process Event Output
+      uses: actions/download-artifact@v3
+      with:
+        name: process-event-output
+        path: code/services/process_events/
+
+    - name: Destroy System
+      shell: bash
+      run: npm run cdk:destroy:all

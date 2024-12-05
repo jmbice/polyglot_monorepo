@@ -1,0 +1,33 @@
+{
+    "name": "process-events",
+    "version": "1.0.1",
+    "type": "module",
+    "main": "cdk/init.ts",
+    "scripts": {
+        "test:local": "bash ../../../scripts/execute_python_tests.sh service_code",
+        "python:install": "bash ../../../scripts/create_virtual_environment.sh service_code",
+        "python:clean": "bash ../../../scripts/clean_virtual_environment.sh service_code",
+        "cdk:deploy": "cdk deploy '*' --require-approval 'never' --outputs-file ./cdk-outputs.json",
+        "cdk:destroy": "cdk destroy '*' --force"
+    },
+    "author": "Jordan Bice",
+    "license": "UNLICENSED",
+    "devDependencies": {
+        "@types/node": "^18.19.33",
+        "ts-node": "^10.9.2",
+        "tslib": "^2.4.0",
+        "typescript": "^5.4.3"
+    },
+    "dependencies": {
+        "aws-cdk-lib": "^2.126.0",
+        "constructs": "^10.0.0",
+        "aws-cli": "^0.0.2"
+    },
+    "files": [
+        "cdk"
+    ],
+    "engines": {
+        "npm": "10.2.2",
+        "node": "20.9.0"
+    }
+}

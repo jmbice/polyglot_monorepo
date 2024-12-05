@@ -1,0 +1,38 @@
+name: Detect Changes
+
+on:
+  workflow_call:
+    outputs:
+      # Expose matched filter
+      infrastructure_paths:
+        value: ${{ jobs.identify_modified_path.outputs.matched_infrastructure }}
+      service_paths:
+        value: ${{ jobs.identify_modified_path.outputs.matched_services }}
+
+jobs:
+  # JOB to run change detection
+  identify_modified_path:
+    name: Change Detection
+    runs-on: ubuntu-latest
+    outputs:
+      matched_services: ${{ steps.modified_service_path.outputs.changes }}
+      matched_infrastructure: ${{ steps.modified_infrastructure_path.outputs.changes }}
+    steps:
+      # Because push requests it is necessary to checkout the branch
+      - uses: actions/checkout@v4
+
+      # Because we use a market place action to identify the services/infrastructure sub repos changed
+      - uses: dorny/paths-filter@v3
+        id: modified_service_path
+        with:
+          filters: |
+            code/services/cron_jobs: 'code/services/cron_jobs/**'
+            code/services/live_api: 'code/services/live_api/**'
+            code/services/process_events: 'code/services/process_events/**'
+            code/services/process_tasks: 'code/services/process_tasks/**'
+
+      - uses: dorny/paths-filter@v3
+        id: modified_infrastructure_path
+        with:
+          filters: |
+            code/infrastructure: 'code/infrastructure/**'

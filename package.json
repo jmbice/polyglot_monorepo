@@ -1,0 +1,24 @@
+{
+  "name": "polyglot_monorepo_skeleton",
+  "version": "1.0.0",
+  "author": "Jordan Bice",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmbice/polyglot_monorepo.git"
+  },
+  "workspaces": [
+    "code/services/ingest_daily_data",
+    "code/services/ingest_live_data",
+    "code/services/process_events",
+    "code/services/process_tasks",
+    "code/infrastructure"
+  ],
+  "bugs": {
+    "url": "https://github.com/jmbice/polyglot_monorepo/issues"
+  },
+  "homepage": "https://github.com/jmbice/polyglot_monorepo#readme",
+  "devDependencies": {
+    "dotenv": "^16.0.2"
+  }
+}

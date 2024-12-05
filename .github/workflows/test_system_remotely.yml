@@ -1,0 +1,93 @@
+name: Test System Remotely
+
+on:
+  workflow_call:
+    secrets:
+      LIBRARY_TOKEN_GITHUB:
+        required: true
+      AWS_ACCOUNT:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_REGION:
+        required: true
+
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: "This is used to tell github which variables/secrets to use"
+
+jobs:
+  test:
+    name: Test
+    environment: ${{ inputs.environment }}
+    env:
+      CICD_DEPLOYMENT_ENVIRONMENT: ${{ vars.DEPLOYMENT_ENVIRONMENT == 'production' && 'production-cicd' || vars.DEPLOYMENT_ENVIRONMENT == 'develop' && 'develop-cicd' || '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Branch
+        uses: actions/checkout@v4
+
+      - name: Set Node Version
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Create Environment File
+        run: |
+          touch .env
+          echo ALLOW_LIST_IPS=${{ vars.ALLOW_LIST_IPS }} >> .env
+          echo DEPLOYMENT_ENVIRONMENT=${{ env.CICD_DEPLOYMENT_ENVIRONMENT }} >> .env
+          echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .env
+          echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .env
+          echo LIBRARY_TOKEN_GITHUB=${{ secrets.LIBRARY_TOKEN_GITHUB }} >> .env
+          echo AWS_REGION=${{ secrets.AWS_REGION }} >> .env
+          echo AWS_ACCOUNT=${{ secrets.AWS_ACCOUNT }} >> .env
+
+      - name: Download Infrastructure Output
+        uses: actions/download-artifact@v3
+        with:
+          name: infrastructure-output
+          path: code/infrastructure/
+
+      - name: Download Cron Job Output
+        uses: actions/download-artifact@v3
+        with:
+          name: cron-job-output
+          path: code/services/cron_jobs/
+
+      - name: Download Live API Output
+        uses: actions/download-artifact@v3
+        with:
+          name: live-api-output
+          path: code/services/live_api/
+
+      - name: Download Process Tasks Output
+        uses: actions/download-artifact@v3
+        with:
+          name: process-tasks-output
+          path: code/services/process_tasks/
+
+      - name: Download Process Event Output
+        uses: actions/download-artifact@v3
+        with:
+          name: process-event-output
+          path: code/services/process_events/
+
+      - name: Install Libraries (node & python)
+        run: |
+          npm i -w=code/services/remote_testing
+          npm run python:install -w=code/services/remote_testing
+
+      - name: Execute Remote Tests
+        run: npm run test:remote
+
+      - name: Clean up virtual environment
+        run: npm run python:clean -w=code/services/remote_testing
+
+      - name: Clean up .env file
+        if: always() # Ensures cleanup even if previous steps fail
+        run: rm .env
